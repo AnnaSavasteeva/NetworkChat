@@ -1,0 +1,18 @@
+package main.chat.clientserver.commands;
+
+import java.io.Serializable;
+import java.util.List;
+
+public class UpdateUsersListCommandData implements Serializable, CommandsGeneral {
+
+    private final List<String> users;
+
+    public UpdateUsersListCommandData(List<String> users) {
+        this.users = users;
+    }
+
+    public List<String> getUsers() {
+        return users;
+    }
+
+}
