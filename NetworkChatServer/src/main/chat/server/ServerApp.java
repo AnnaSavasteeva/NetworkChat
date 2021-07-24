@@ -3,7 +3,7 @@ package main.chat.server;
 import main.chat.server.chat.MyServer;
 
 public class ServerApp {
-    private static final int DEFAULT_PORT = 8189;
+    private static final int DEFAULT_PORT = 8190;
 
     public static void main(String[] args) {
         int port = DEFAULT_PORT;

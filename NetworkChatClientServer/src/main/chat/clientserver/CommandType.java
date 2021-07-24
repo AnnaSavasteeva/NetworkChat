@@ -9,4 +9,5 @@ public enum CommandType {
     CLIENT_MESSAGE,
     END,
     UPDATE_USERS_LIST,
+    AUTH_TIMEOUT,
 }

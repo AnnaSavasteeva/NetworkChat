@@ -8,24 +8,31 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ClientHandler {
     private final MyServer server;
     private final Socket clientSocket;
-    //    Классы Object...Stream используются для обмена объектами, что нам и нужно,
+//    Классы Object...Stream используются для обмена объектами, что нам и нужно,
 //    т.к. сервер и клиент будут обмениваться объектами-командами из модуля NetworkChatClientServer
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
     private String username;
+
+    private Timer timer;
+    private static final int TIME_LIMIT = 120000;
 
     public ClientHandler(MyServer server, Socket clientSocket) {
         this.server = server;
         this.clientSocket = clientSocket;
     }
 
-    //    для обработки подключений
+
+
+//    для обработки подключений
     public void handle() throws IOException {
-//            Обязательно в такой последовательности - противоположной клиенту
+//        Обязательно в такой последовательности - противоположной клиенту
         inputStream = new ObjectInputStream(clientSocket.getInputStream());
         outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
 
@@ -38,6 +45,7 @@ public class ClientHandler {
 //        то дальше потока она не уйдет.
         new Thread(() -> {
             try {
+                closeClientSocketOnTimeLimit(clientSocket);
                 authentication();
                 readMessages();
             } catch (IOException e) {
@@ -77,6 +85,9 @@ public class ClientHandler {
                     this.username = username;
                     sendCommand(Command.authOkCommand(username));
                     server.subscribe(this);
+                    if (timer != null) {
+                        timer.cancel();
+                    }
                     return;
                 }
             }
@@ -122,7 +133,7 @@ public class ClientHandler {
         try {
             command = (Command) inputStream.readObject();
         } catch (ClassNotFoundException e) {
-            System.err.println("Failed to find main.Command class");
+            System.err.println("Failed to find Command class");
             e.printStackTrace();
         }
         return command;
@@ -130,6 +141,25 @@ public class ClientHandler {
 
     public void sendCommand(Command command) throws IOException {
         outputStream.writeObject(command);
+    }
+
+
+    private void closeClientSocketOnTimeLimit(Socket socket) {
+        this.timer = new Timer(true);
+
+        System.out.println("Time started");
+
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    sendCommand(Command.authTimeoutCommand("Connection closed: user is not logged in"));
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, TIME_LIMIT);
     }
 
 
@@ -144,4 +174,5 @@ public class ClientHandler {
     public String getUsername() {
         return username;
     }
+
 }
