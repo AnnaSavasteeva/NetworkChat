@@ -11,7 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Network {
 
     public static final String SERVER_HOST = "localhost";
-    public static final int SERVER_PORT = 8189;
+    public static final int SERVER_PORT = 8190;
 
 //    Singleton is a creational design pattern, which ensures
 //    that only one object of its kind exists and provides
