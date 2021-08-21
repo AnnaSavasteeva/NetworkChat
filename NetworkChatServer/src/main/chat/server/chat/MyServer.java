@@ -38,6 +38,7 @@ public class MyServer {
         }
     }
 
+
     private void waitAndProcessClientConnection(ServerSocket serverSocket) throws IOException {
         System.out.println("Waiting for new client connection");
         Socket clientSocket = serverSocket.accept();
@@ -48,16 +49,6 @@ public class MyServer {
         clientHandler.handle();
     }
 
-    //    Используем synchronized, т.к. к clients может идти одновременное обращение сразу из нескольких потоков:
-//    рассылка сообщения в чате, добавление подключения в clients, удаление подключения из clients
-    public synchronized void broadcastMessage(String message, ClientHandler sender) throws IOException {
-        for (ClientHandler client : clients) {
-//            equals тут можно не использовать, т.к. мы сравниваем не идентичность, а именно равенство
-            if (client != sender) {
-                client.sendCommand(Command.clientMessageCommand(sender.getUsername(), message));
-            }
-        }
-    }
 
     public synchronized void subscribe(ClientHandler clientHandler) throws IOException {
         clients.add(clientHandler);
@@ -68,6 +59,7 @@ public class MyServer {
         clients.remove(clientHandler);
         updateUsersListForClients();
     }
+
 
     public AuthService getAuthService() {
         return authService;
@@ -83,6 +75,18 @@ public class MyServer {
         return false;
     }
 
+
+//    Используем synchronized, т.к. к clients может идти одновременное обращение сразу из нескольких потоков:
+//    рассылка сообщения в чате, добавление подключения в clients, удаление подключения из clients
+    public synchronized void broadcastMessage(String message, ClientHandler sender) throws IOException {
+        for (ClientHandler client : clients) {
+//            equals тут можно не использовать, т.к. мы сравниваем не идентичность, а именно равенство
+            if (client != sender) {
+                client.sendCommand(Command.clientMessageCommand(sender.getUsername(), message));
+            }
+        }
+    }
+
     public synchronized void sendPrivateMessage(ClientHandler sender, String recipient, String privateMessage) throws IOException {
         for (ClientHandler client: clients) {
             if (client != sender && client.getUsername().equals(recipient)) {
@@ -91,6 +95,7 @@ public class MyServer {
             }
         }
     }
+
 
     public void updateUsersListForClients() throws IOException {
         List<String> users = new ArrayList<>();
@@ -103,6 +108,7 @@ public class MyServer {
             client.sendCommand(Command.updateUsersListCommand(users));
         }
     }
+
 
     private void dbConnect() {
         try {
