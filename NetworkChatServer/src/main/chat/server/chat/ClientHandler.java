@@ -1,4 +1,5 @@
 package main.chat.server.chat;
+
 import main.chat.clientserver.Command;
 import main.chat.clientserver.CommandType;
 import main.chat.clientserver.commands.AuthCommandData;
@@ -8,7 +9,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.sql.Connection;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,7 +20,6 @@ public class ClientHandler {
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
 
-    private Connection connection;
     private String username;
 
     private Timer timer;
@@ -48,7 +47,6 @@ public class ClientHandler {
 //        то дальше потока она не уйдет.
         new Thread(() -> {
             try {
-                this.connection = MyServer.dbConnect();
                 closeClientSocketOnTimeLimit(clientSocket);
                 authentication();
                 readMessages();
@@ -80,7 +78,7 @@ public class ClientHandler {
                 String login = data.getLogin();
                 String password = data.getPassword();
 
-                String username = server.getAuthService().getUsernameByLoginAndPassword(this.connection, login, password);
+                String username = server.getAuthService().getUsernameByLoginAndPassword(login, password);
                 if (username == null) {
                     sendCommand(Command.errorCommand("Некорректные логин и пароль!"));
                 } else if (server.isUsernameBusy(username)) {
@@ -171,7 +169,6 @@ public class ClientHandler {
     private void closeConnection() throws IOException {
         server.unsubscribe(this);
         clientSocket.close();
-        MyServer.dbDisconnect(this.connection);
     }
 
 

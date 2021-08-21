@@ -10,7 +10,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +17,7 @@ import java.util.List;
 public class MyServer {
     private final static String DB_URL = "jdbc:sqlite:NetworkChatServer/networkChatDb.db";
     private final List<ClientHandler> clients = new ArrayList<>();
+    private Connection connection;
     private AuthService authService;
 
     public void start(int port) {
@@ -25,7 +25,8 @@ public class MyServer {
         try(ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server has been started");
 
-            authService = new AuthService();
+            this.dbConnect();
+            authService = new AuthService(this.connection);
 
             while (true) {
                 waitAndProcessClientConnection(serverSocket);
@@ -103,20 +104,19 @@ public class MyServer {
         }
     }
 
-    public static Connection dbConnect() {
+    private void dbConnect() {
         try {
             System.out.println("Database has been connected");
-            return DriverManager.getConnection(DB_URL);
+            this.connection = DriverManager.getConnection(DB_URL);
         } catch (SQLException e) {
             System.out.println("Database connection failed");
         }
-        return null;
     }
 
-    public static void dbDisconnect(Connection connection) {
+    public void dbDisconnect() {
         try {
-            if (connection != null) {
-                connection.close();
+            if (this.connection != null) {
+                this.connection.close();
             }
         } catch (SQLException e) {
             e.printStackTrace();

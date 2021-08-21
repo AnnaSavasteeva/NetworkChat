@@ -4,14 +4,22 @@ import java.sql.*;
 
 public class AuthService {
 
-    public String getUsernameByLoginAndPassword(Connection connection, String login, String password) {
+    private PreparedStatement ps;
 
+    public AuthService(Connection connection) {
         try {
-            PreparedStatement ps = connection.prepareStatement("SELECT * FROM users WHERE login = ? AND password = ?");
-            ps.setString(1, login);
-            ps.setString(2, password);
+            this.ps = connection.prepareStatement("SELECT * FROM users WHERE login = ? AND password = ?");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
-            ResultSet rs = ps.executeQuery();
+    public String getUsernameByLoginAndPassword(String login, String password) {
+        try {
+            this.ps.setString(1, login);
+            this.ps.setString(2, password);
+
+            ResultSet rs = this.ps.executeQuery();
             if (rs.next()) {
                 return rs.getString("username");
             }
