@@ -1,0 +1,30 @@
+22.08.2021 0:25:18
+Sender: username1
+Recipient: username2
+Message: сообщение юзеру 2
+
+22.08.2021 0:25:29
+Sender: username2
+Recipient: username1
+Message: ответ юзеру 1
+
+22.08.2021 0:25:43
+Sender: username3
+Recipient: username1
+Message: сообщение для всехюзеров
+
+22.08.2021 0:28:36
+Sender: username1
+Recipient: username1
+Message: ответ юзеру 3
+
+22.08.2021 0:28:50
+Sender: username1
+Recipient: username3
+Message: повтор: ответ юзеру 3
+
+22.08.2021 0:29:01
+Sender: username3
+Recipient: username1
+Message: привет, юзер 1
+

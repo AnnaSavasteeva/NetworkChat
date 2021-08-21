@@ -5,17 +5,23 @@ import main.chat.server.chat.auth.AuthService;
 
 import main.chat.clientserver.Command;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MyServer {
     private final static String DB_URL = "jdbc:sqlite:NetworkChatServer/networkChatDb.db";
+    public static final String HISTORY_FOLDER = "NetworkChatClient\\src\\history\\";
     private final List<ClientHandler> clients = new ArrayList<>();
     private Connection connection;
     private AuthService authService;
@@ -79,21 +85,86 @@ public class MyServer {
 //    Используем synchronized, т.к. к clients может идти одновременное обращение сразу из нескольких потоков:
 //    рассылка сообщения в чате, добавление подключения в clients, удаление подключения из clients
     public synchronized void broadcastMessage(String message, ClientHandler sender) throws IOException {
+        String senderUsername = sender.getUsername();
+
         for (ClientHandler client : clients) {
+            String pathToHistoryFile = this.createPathToHistoryFile(client.getUsername());
+            String historyData;
+
 //            equals тут можно не использовать, т.к. мы сравниваем не идентичность, а именно равенство
             if (client != sender) {
-                client.sendCommand(Command.clientMessageCommand(sender.getUsername(), message));
+                client.sendCommand(Command.clientMessageCommand(senderUsername, message));
+                historyData = createHistoryData(senderUsername, client.getUsername(), message);
+            } else {
+                historyData = createHistoryData(senderUsername, "all users", message);
             }
+
+            this.putDataToHistory(historyData, pathToHistoryFile);
         }
     }
 
     public synchronized void sendPrivateMessage(ClientHandler sender, String recipient, String privateMessage) throws IOException {
+        String senderUsername = sender.getUsername();
+        String historyData = createHistoryData(senderUsername, recipient, privateMessage);
+        boolean gotSender = false;
+        boolean gotRecipient = false;
+
         for (ClientHandler client: clients) {
-            if (client != sender && client.getUsername().equals(recipient)) {
-                client.sendCommand(Command.clientMessageCommand(sender.getUsername(), privateMessage));
+            if (!gotRecipient && (client != sender && client.getUsername().equals(recipient))) {
+                client.sendCommand(Command.clientMessageCommand(senderUsername, privateMessage));
+
+                String pathToRecipientHistory = this.createPathToHistoryFile(client.getUsername());
+                this.putDataToHistory(historyData, pathToRecipientHistory);
+                gotRecipient = true;
+            }
+
+            if (!gotSender && (client == sender)) {
+                String pathToSenderHistory = this.createPathToHistoryFile(senderUsername);
+                this.putDataToHistory(historyData, pathToSenderHistory);
+                gotSender = true;
+            }
+
+            if (gotSender && gotRecipient) {
                 break;
             }
         }
+    }
+
+    private void putDataToHistory(String historyData, String path) {
+        if (!isHistoryFileExist(path)) {
+            createHistoryFile(path);
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path, true))) {
+            writer.write(historyData);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isHistoryFileExist(String pathToFile) {
+        return (new File(pathToFile).exists());
+    }
+
+    private void createHistoryFile(String pathToFile) {
+        try {
+            (new File(pathToFile)).createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String createHistoryData (String sender, String recipient, String message) {
+        return DateFormat.getDateTimeInstance().format(new Date()) + "\n" +
+                "Sender: " + sender + "\n" +
+                "Recipient: " + recipient + "\n" +
+                "Message: " + message + "\n" +
+                System.lineSeparator();
+    }
+
+    private String createPathToHistoryFile(String username) {
+        return HISTORY_FOLDER + "history" + "_" + username + ".txt";
     }
 
 
