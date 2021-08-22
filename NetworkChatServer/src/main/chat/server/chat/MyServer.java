@@ -156,11 +156,10 @@ public class MyServer {
     }
 
     private String createHistoryData (String sender, String recipient, String message) {
-        return DateFormat.getDateTimeInstance().format(new Date()) + "\n" +
-                "Sender: " + sender + "\n" +
-                "Recipient: " + recipient + "\n" +
-                "Message: " + message + "\n" +
-                System.lineSeparator();
+        String historyStr = String.format("[ Date: %s ] --- [ Sender: %s ] --- [ Recipient: %s ] --- [ Message: %s ]%n",
+                DateFormat.getDateTimeInstance().format(new Date()), sender, recipient, message, System.lineSeparator());
+
+        return historyStr;
     }
 
     private String createPathToHistoryFile(String username) {
