@@ -5,10 +5,7 @@ import main.chat.server.chat.auth.AuthService;
 
 import main.chat.clientserver.Command;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
@@ -21,15 +18,20 @@ import java.util.List;
 
 public class MyServer {
     private final static String DB_URL = "jdbc:sqlite:NetworkChatServer/networkChatDb.db";
-    public static final String HISTORY_FOLDER = "NetworkChatClient\\src\\history\\";
+    private static final String HISTORY_FOLDER = "NetworkChatClient\\src\\history";
+    private static final int HISTORY_LIMIT = 100;
+
     private final List<ClientHandler> clients = new ArrayList<>();
     private Connection connection;
     private AuthService authService;
+
 
     public void start(int port) {
 
         try(ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server has been started");
+
+            this.loadHistory();
 
             this.dbConnect();
             authService = new AuthService(this.connection);
@@ -41,6 +43,40 @@ public class MyServer {
         } catch (IOException e) {
             System.err.println("Failed to bind port " + port);
             e.printStackTrace();
+        }
+    }
+
+    private void loadHistory() {
+        File historyFolder = new File(HISTORY_FOLDER);
+        File[] historyFilesCollection = historyFolder.listFiles();
+
+        if (historyFilesCollection.length > 0) {
+            loadLimitedHistory(historyFilesCollection, HISTORY_LIMIT);
+        }
+    }
+
+    private void loadLimitedHistory(File[] filesCollection, int linesLimit) {
+        for (File file : filesCollection) {
+            ArrayList<String> linesArr = new ArrayList<>();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String str;
+                while ((str = reader.readLine()) != null) {
+                    linesArr.add(str);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                int startLine = linesArr.size() - linesLimit;
+                for (int i = startLine; i < linesArr.size(); i++) {
+                    writer.write(linesArr.get(i) + System.lineSeparator());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -156,14 +192,12 @@ public class MyServer {
     }
 
     private String createHistoryData (String sender, String recipient, String message) {
-        String historyStr = String.format("[ Date: %s ] --- [ Sender: %s ] --- [ Recipient: %s ] --- [ Message: %s ]%n",
+        return String.format("[ Date: %s ] --- [ Sender: %s ] --- [ Recipient: %s ] --- [ Message: %s ]%n",
                 DateFormat.getDateTimeInstance().format(new Date()), sender, recipient, message, System.lineSeparator());
-
-        return historyStr;
     }
 
     private String createPathToHistoryFile(String username) {
-        return HISTORY_FOLDER + "history" + "_" + username + ".txt";
+        return HISTORY_FOLDER + "\\history" + "_" + username + ".txt";
     }
 
 

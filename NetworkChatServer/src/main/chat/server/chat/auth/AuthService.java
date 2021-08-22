@@ -8,7 +8,7 @@ public class AuthService {
 
     public AuthService(Connection connection) {
         try {
-            this.ps = connection.prepareStatement("SELECT * FROM users WHERE login = ? AND password = ?");
+            this.ps = connection.prepareStatement("SELECT username FROM users WHERE login = ? AND password = ?");
         } catch (SQLException e) {
             e.printStackTrace();
         }
