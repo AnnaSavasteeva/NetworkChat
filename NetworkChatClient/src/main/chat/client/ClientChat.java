@@ -19,7 +19,7 @@ public class ClientChat extends Application {
     public static ClientChat INSTANCE;
 
     private static final String CHAT_WINDOW_FXML = "..\\..\\..\\chat.fxml";
-    private static final String AUTH_DIALOG_FXML = "..\\..\\..\\authDialog.fxml";
+    private static final String AUTH_DIALOG_FXML = "/authDialog.fxml";
 
 
     private Stage chatStage;
