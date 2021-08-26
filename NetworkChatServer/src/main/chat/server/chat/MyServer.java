@@ -18,7 +18,7 @@ import java.util.List;
 
 public class MyServer {
     private final static String DB_URL = "jdbc:sqlite:NetworkChatServer/networkChatDb.db";
-    private static final String HISTORY_FOLDER = "NetworkChatClient\\src\\history";
+    private static final String HISTORY_FOLDER = "NetworkChatClient\\history";
     private static final int HISTORY_LIMIT = 100;
 
     private final List<ClientHandler> clients = new ArrayList<>();
@@ -43,6 +43,8 @@ public class MyServer {
         } catch (IOException e) {
             System.err.println("Failed to bind port " + port);
             e.printStackTrace();
+        } finally {
+            dbDisconnect();
         }
     }
 
@@ -70,7 +72,7 @@ public class MyServer {
 
 
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                int startLine = linesArr.size() - linesLimit;
+                int startLine = (linesArr.size() <= linesLimit) ? 0 : (linesArr.size() - linesLimit);
                 for (int i = startLine; i < linesArr.size(); i++) {
                     writer.write(linesArr.get(i) + System.lineSeparator());
                 }

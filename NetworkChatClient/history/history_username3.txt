@@ -1,0 +1,5 @@
+[ Date: 26.08.2021 19:20:39 ] --- [ Sender: username3 ] --- [ Recipient: all users ] --- [ Message: 16 ]
+[ Date: 26.08.2021 19:20:50 ] --- [ Sender: username3 ] --- [ Recipient: username1 ] --- [ Message: 17 ]
+[ Date: 26.08.2021 19:20:51 ] --- [ Sender: username3 ] --- [ Recipient: username1 ] --- [ Message: 18 ]
+[ Date: 26.08.2021 19:20:53 ] --- [ Sender: username3 ] --- [ Recipient: username1 ] --- [ Message: 19 ]
+[ Date: 26.08.2021 19:20:54 ] --- [ Sender: username3 ] --- [ Recipient: username1 ] --- [ Message: 20 ]
