@@ -6,11 +6,15 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
 import main.chat.client.controllers.AuthController;
 import main.chat.client.controllers.ChatController;
+import org.apache.commons.io.input.ReversedLinesFileReader;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class ClientChat extends Application {
@@ -24,7 +28,7 @@ public class ClientChat extends Application {
     private static final String AUTH_DIALOG_FXML = "/authDialog.fxml";
 
     private static final String HISTORY_FOLDER = "NetworkChatClient\\history";
-    private static final int HISTORY_LIMIT = 100;
+    private static final int HISTORY_LIMIT = 5;
 
 
     private Stage chatStage;
@@ -116,7 +120,7 @@ public class ClientChat extends Application {
         getAuthController().close();
         getAuthStage().close();
 
-        this.loadHistoryFiles();
+        this.loadHistoryFile();
     }
 
 
@@ -126,37 +130,36 @@ public class ClientChat extends Application {
         return HISTORY_FOLDER;
     }
 
-    private void loadHistoryFiles() {
-        File historyFolder = new File(HISTORY_FOLDER);
-        File[] historyFilesCollection = historyFolder.listFiles();
-
-        if (historyFilesCollection != null && historyFilesCollection.length > 0) {
-            loadLimitedHistory(historyFilesCollection, HISTORY_LIMIT);
+    private void loadHistoryFile() {
+        String historyFilePath = HISTORY_FOLDER + "\\history_" + chatStage.getTitle() + ".txt";
+        File historyFile = new File(historyFilePath);
+        if (historyFile.exists()) {
+            loadLimitedHistory(historyFile, HISTORY_LIMIT);
         }
     }
 
-    private void loadLimitedHistory(File[] filesCollection, int linesLimit) {
-        for (File file : filesCollection) {
-            ArrayList<String> linesArr = new ArrayList<>();
+    private void loadLimitedHistory(File file, int linesLimit) {
+        ArrayList<String> linesArr = new ArrayList<>();
 
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                String str;
-                while ((str = reader.readLine()) != null) {
-                    linesArr.add(str);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+        try (ReversedLinesFileReader reader = new ReversedLinesFileReader(file, StandardCharsets.UTF_8)) {
+            String str;
+            int counter = 0;
+            while ((str = reader.readLine()) != null && counter < linesLimit) {
+                linesArr.add(str);
+                counter++;
             }
-
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                int startLine = (linesArr.size() <= linesLimit) ? 0 : (linesArr.size() - linesLimit);
-                for (int i = startLine; i < linesArr.size(); i++) {
-                    writer.write(linesArr.get(i) + System.lineSeparator());
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            for (int i = linesArr.size() - 1; i >= 0; i--) {
+                writer.write(linesArr.get(i) + System.lineSeparator());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 
