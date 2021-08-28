@@ -11,9 +11,7 @@ import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class MyServer {
@@ -31,8 +29,6 @@ public class MyServer {
         try(ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server has been started");
 
-            this.loadHistory();
-
             this.dbConnect();
             authService = new AuthService(this.connection);
 
@@ -45,40 +41,6 @@ public class MyServer {
             e.printStackTrace();
         } finally {
             dbDisconnect();
-        }
-    }
-
-    private void loadHistory() {
-        File historyFolder = new File(HISTORY_FOLDER);
-        File[] historyFilesCollection = historyFolder.listFiles();
-
-        if (historyFilesCollection.length > 0) {
-            loadLimitedHistory(historyFilesCollection, HISTORY_LIMIT);
-        }
-    }
-
-    private void loadLimitedHistory(File[] filesCollection, int linesLimit) {
-        for (File file : filesCollection) {
-            ArrayList<String> linesArr = new ArrayList<>();
-
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                String str;
-                while ((str = reader.readLine()) != null) {
-                    linesArr.add(str);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                int startLine = (linesArr.size() <= linesLimit) ? 0 : (linesArr.size() - linesLimit);
-                for (int i = startLine; i < linesArr.size(); i++) {
-                    writer.write(linesArr.get(i) + System.lineSeparator());
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -126,39 +88,25 @@ public class MyServer {
         String senderUsername = sender.getUsername();
 
         for (ClientHandler client : clients) {
-            String pathToHistoryFile = this.createPathToHistoryFile(client.getUsername());
-            String historyData;
-
 //            equals тут можно не использовать, т.к. мы сравниваем не идентичность, а именно равенство
             if (client != sender) {
                 client.sendCommand(Command.clientMessageCommand(senderUsername, message));
-                historyData = createHistoryData(senderUsername, client.getUsername(), message);
-            } else {
-                historyData = createHistoryData(senderUsername, "all users", message);
             }
-
-            this.putDataToHistory(historyData, pathToHistoryFile);
         }
     }
 
     public synchronized void sendPrivateMessage(ClientHandler sender, String recipient, String privateMessage) throws IOException {
         String senderUsername = sender.getUsername();
-        String historyData = createHistoryData(senderUsername, recipient, privateMessage);
         boolean gotSender = false;
         boolean gotRecipient = false;
 
         for (ClientHandler client: clients) {
             if (!gotRecipient && (client != sender && client.getUsername().equals(recipient))) {
                 client.sendCommand(Command.clientMessageCommand(senderUsername, privateMessage));
-
-                String pathToRecipientHistory = this.createPathToHistoryFile(client.getUsername());
-                this.putDataToHistory(historyData, pathToRecipientHistory);
                 gotRecipient = true;
             }
 
             if (!gotSender && (client == sender)) {
-                String pathToSenderHistory = this.createPathToHistoryFile(senderUsername);
-                this.putDataToHistory(historyData, pathToSenderHistory);
                 gotSender = true;
             }
 
@@ -166,40 +114,6 @@ public class MyServer {
                 break;
             }
         }
-    }
-
-    private void putDataToHistory(String historyData, String path) {
-        if (!isHistoryFileExist(path)) {
-            createHistoryFile(path);
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path, true))) {
-            writer.write(historyData);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private boolean isHistoryFileExist(String pathToFile) {
-        return (new File(pathToFile).exists());
-    }
-
-    private void createHistoryFile(String pathToFile) {
-        try {
-            (new File(pathToFile)).createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String createHistoryData (String sender, String recipient, String message) {
-        return String.format("[ Date: %s ] --- [ Sender: %s ] --- [ Recipient: %s ] --- [ Message: %s ]%n",
-                DateFormat.getDateTimeInstance().format(new Date()), sender, recipient, message, System.lineSeparator());
-    }
-
-    private String createPathToHistoryFile(String username) {
-        return HISTORY_FOLDER + "\\history" + "_" + username + ".txt";
     }
 
 

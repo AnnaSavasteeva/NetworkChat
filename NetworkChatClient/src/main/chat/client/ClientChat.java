@@ -9,7 +9,9 @@ import javafx.stage.Stage;
 
 import main.chat.client.controllers.AuthController;
 import main.chat.client.controllers.ChatController;
-import java.io.IOException;
+
+import java.io.*;
+import java.util.ArrayList;
 
 public class ClientChat extends Application {
 
@@ -21,6 +23,9 @@ public class ClientChat extends Application {
     private static final String CHAT_WINDOW_FXML = "..\\..\\..\\chat.fxml";
     private static final String AUTH_DIALOG_FXML = "/authDialog.fxml";
 
+    private static final String HISTORY_FOLDER = "NetworkChatClient\\history";
+    private static final int HISTORY_LIMIT = 100;
+
 
     private Stage chatStage;
     private Stage authStage;
@@ -30,7 +35,7 @@ public class ClientChat extends Application {
 
 //    init() вызывается ДО start(), это специальный метод для инициализации статической переменной типа данного класса
     @Override
-    public void init() throws Exception {
+    public void init() {
         INSTANCE = this;
     }
 
@@ -64,7 +69,6 @@ public class ClientChat extends Application {
 
 
 //    Отрисовка окон аутентификации и чата
-
     private void initViews() throws IOException {
         initChatWindow();
         initAuthDialog();
@@ -106,9 +110,53 @@ public class ClientChat extends Application {
 //    запускаем обработку сообщений в чате
     public void switchToMainChatWindow(String username) {
         getChatStage().setTitle(username);
+        getChatController().setUsername(username);
         getChatController().initMessageHandler();
+
         getAuthController().close();
         getAuthStage().close();
+
+        this.loadHistoryFiles();
+    }
+
+
+
+//    history
+    public static String getHistoryFolder() {
+        return HISTORY_FOLDER;
+    }
+
+    private void loadHistoryFiles() {
+        File historyFolder = new File(HISTORY_FOLDER);
+        File[] historyFilesCollection = historyFolder.listFiles();
+
+        if (historyFilesCollection != null && historyFilesCollection.length > 0) {
+            loadLimitedHistory(historyFilesCollection, HISTORY_LIMIT);
+        }
+    }
+
+    private void loadLimitedHistory(File[] filesCollection, int linesLimit) {
+        for (File file : filesCollection) {
+            ArrayList<String> linesArr = new ArrayList<>();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String str;
+                while ((str = reader.readLine()) != null) {
+                    linesArr.add(str);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                int startLine = (linesArr.size() <= linesLimit) ? 0 : (linesArr.size() - linesLimit);
+                for (int i = startLine; i < linesArr.size(); i++) {
+                    writer.write(linesArr.get(i) + System.lineSeparator());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
