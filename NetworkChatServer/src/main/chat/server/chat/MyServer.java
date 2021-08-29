@@ -1,11 +1,10 @@
 package main.chat.server.chat;
 
 
+import main.chat.clientserver.Command;
 import main.chat.server.chat.auth.AuthService;
 
-import main.chat.clientserver.Command;
-
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
@@ -13,15 +12,16 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MyServer {
     private final static String DB_URL = "jdbc:sqlite:NetworkChatServer/networkChatDb.db";
-    private static final String HISTORY_FOLDER = "NetworkChatClient\\history";
-    private static final int HISTORY_LIMIT = 100;
 
     private final List<ClientHandler> clients = new ArrayList<>();
     private Connection connection;
     private AuthService authService;
+    ExecutorService executor;
 
 
     public void start(int port) {
@@ -32,8 +32,10 @@ public class MyServer {
             this.dbConnect();
             authService = new AuthService(this.connection);
 
+            executor = Executors.newCachedThreadPool();
+
             while (true) {
-                waitAndProcessClientConnection(serverSocket);
+                waitAndProcessClientConnection(serverSocket, executor);
             }
 
         } catch (IOException e) {
@@ -41,18 +43,19 @@ public class MyServer {
             e.printStackTrace();
         } finally {
             dbDisconnect();
+            executor.shutdown();
         }
     }
 
 
-    private void waitAndProcessClientConnection(ServerSocket serverSocket) throws IOException {
+    private void waitAndProcessClientConnection(ServerSocket serverSocket, ExecutorService executor) throws IOException {
         System.out.println("Waiting for new client connection");
         Socket clientSocket = serverSocket.accept();
         System.out.println("Client has been connected");
 
         ClientHandler clientHandler = new ClientHandler(this, clientSocket);
 
-        clientHandler.handle();
+        clientHandler.handle(executor);
     }
 
 
