@@ -1,0 +1,6 @@
+[ Date: 28.08.2021 18:56:47 ] --- [ Sender: username3 ] --- [ Recipient: username2 ] --- [ Message: 14 ]
+[ Date: 28.08.2021 18:56:48 ] --- [ Sender: username3 ] --- [ Recipient: username2 ] --- [ Message: 15 ]
+[ Date: 28.08.2021 18:58:13 ] --- [ Sender: username1 ] --- [ Recipient: username2 ] --- [ Message: Тест кириллицы ]
+[ Date: 29.08.2021 0:14:16 ] --- [ Sender: username2 ] --- [ Recipient: username2 ] --- [ Message: ExecutorService test ]
+[ Date: 29.08.2021 0:14:34 ] --- [ Sender: username2 ] --- [ Recipient: username1 ] --- [ Message: ExecutorService test ]
+[ Date: 29.08.2021 13:14:25 ] --- [ Sender: username3 ] --- [ Recipient: username2 ] --- [ Message: test again ]

@@ -6,10 +6,16 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
 import main.chat.client.controllers.AuthController;
 import main.chat.client.controllers.ChatController;
+import org.apache.commons.io.input.ReversedLinesFileReader;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 public class ClientChat extends Application {
 
@@ -18,8 +24,11 @@ public class ClientChat extends Application {
 //    нужных методов
     public static ClientChat INSTANCE;
 
-    private static final String CHAT_WINDOW_FXML = "chat.fxml";
-    private static final String AUTH_DIALOG_FXML = "authDialog.fxml";
+    private static final String CHAT_WINDOW_FXML = "..\\..\\..\\chat.fxml";
+    private static final String AUTH_DIALOG_FXML = "/authDialog.fxml";
+
+    private static final String HISTORY_FOLDER = "NetworkChatClient\\history";
+    private static final int HISTORY_LIMIT = 5;
 
 
     private Stage chatStage;
@@ -30,7 +39,7 @@ public class ClientChat extends Application {
 
 //    init() вызывается ДО start(), это специальный метод для инициализации статической переменной типа данного класса
     @Override
-    public void init() throws Exception {
+    public void init() {
         INSTANCE = this;
     }
 
@@ -64,7 +73,6 @@ public class ClientChat extends Application {
 
 
 //    Отрисовка окон аутентификации и чата
-
     private void initViews() throws IOException {
         initChatWindow();
         initAuthDialog();
@@ -106,9 +114,52 @@ public class ClientChat extends Application {
 //    запускаем обработку сообщений в чате
     public void switchToMainChatWindow(String username) {
         getChatStage().setTitle(username);
+        getChatController().setUsername(username);
         getChatController().initMessageHandler();
+
         getAuthController().close();
         getAuthStage().close();
+
+        this.loadHistoryFile();
+    }
+
+
+
+//    history
+    public static String getHistoryFolder() {
+        return HISTORY_FOLDER;
+    }
+
+    private void loadHistoryFile() {
+        String historyFilePath = HISTORY_FOLDER + "\\history_" + chatStage.getTitle() + ".txt";
+        File historyFile = new File(historyFilePath);
+        if (historyFile.exists()) {
+            loadLimitedHistory(historyFile, HISTORY_LIMIT);
+        }
+    }
+
+    private void loadLimitedHistory(File file, int linesLimit) {
+        ArrayList<String> linesArr = new ArrayList<>();
+
+        try (ReversedLinesFileReader reader = new ReversedLinesFileReader(file, StandardCharsets.UTF_8)) {
+            String str;
+            int counter = 0;
+            while ((str = reader.readLine()) != null && counter < linesLimit) {
+                linesArr.add(str);
+                counter++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            for (int i = linesArr.size() - 1; i >= 0; i--) {
+                writer.write(linesArr.get(i) + System.lineSeparator());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 

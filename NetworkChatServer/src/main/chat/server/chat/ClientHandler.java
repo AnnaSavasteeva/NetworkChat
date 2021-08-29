@@ -11,6 +11,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
 
 public class ClientHandler {
     private final MyServer server;
@@ -33,7 +34,7 @@ public class ClientHandler {
 
 
 //    для обработки подключений
-    public void handle() throws IOException {
+    public void handle(ExecutorService executor) throws IOException {
 //        Обязательно в такой последовательности - противоположной клиенту
         inputStream = new ObjectInputStream(clientSocket.getInputStream());
         outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -45,7 +46,7 @@ public class ClientHandler {
 //        Обрабатываем исключение уже здесь, поскольку из потока, вызываемого в рамках текущего метода,
 //        нельзя прокинуть исключение в другой внешний поток. Т.е. если ошибка былка брошена внутри потока,
 //        то дальше потока она не уйдет.
-        new Thread(() -> {
+        executor.execute(() -> {
             try {
                 closeClientSocketOnTimeLimit(clientSocket);
                 authentication();
@@ -59,7 +60,7 @@ public class ClientHandler {
                     System.err.println("Failed to close connection");
                 }
             }
-        }).start();
+        });
     }
 
     private void authentication() throws IOException {
